@@ -1,10 +1,16 @@
 # Compliance mapping — điền trong checkpoint 5
 
+Evidence trỏ tới code ở commit nộp bài và tới `reports/ledger.jsonl` của lần chạy prove (Bước 5). Dữ liệu là synthetic, chạy `--mock`, principal là fixture mô phỏng.
+
 | Nguồn / yêu cầu | Control đã làm | Evidence file:dòng | Giới hạn |
 |---|---|---|---|
-| Luật 91/2025/QH15 | | | |
-| NĐ 356/2025/NĐ-CP | | | |
-| Luật AI 134/2025/QH15 | | | |
-| OWASP ASI01, ASI03, ASI04 | | | |
+| Luật 91/2025/QH15 (Bảo vệ dữ liệu cá nhân) — nguyên tắc xử lý đúng mục đích, trong phạm vi cần thiết; bảo vệ dữ liệu nhạy cảm (CCCD, STK) | Purpose binding: principal chỉ dùng tool cho purpose được khai báo; Run B chỉ đọc khách gắn với ticket (tối thiểu hoá), không đọc khách do attacker nêu; `support_l1` không đọc record restricted; PII bị redact trước khi trả lời | `agent/policy.py:86` (purpose), `agent/policy.py:93` (scope), `agent/runner.py:101` (related_tickets), `agent/runner.py:148` (read sau PEP), `agent/runner.py:167` (redact); `reports/ledger.jsonl:25` (support_l1 deny) | Số điều/khoản cụ thể: **chưa xác minh** với văn bản gốc. Nguồn thứ cấp (luatvietnam.vn) nhắc Điều 30 về xử lý dữ liệu trong môi trường AI — **chưa xác minh**. Mô phỏng kỹ thuật không chứng minh tuân thủ |
+| NĐ 356/2025/NĐ-CP (hướng dẫn Luật 91) — biện pháp kỹ thuật, ghi nhận hoạt động xử lý, kiểm soát chuyển dữ liệu | Ledger hash-chain ghi mọi tool call (allow/deny, reason, on_behalf_of, purpose, args_hash, không PII thô); chặn egress dữ liệu restricted | `agent/ledger.py:59` (append), `agent/ledger.py:79` (verify chain), `agent/runner.py:119` (ghi ledger mọi call), `agent/policy.py:74` (restricted+egress deny); `reports/ledger.jsonl:23` | Điều khoản cụ thể **chưa xác minh**. Ledger chỉ phát hiện sửa dòng trong file, không chống xoá đuôi/viết lại cả file nếu thiếu mốc tin cậy ngoài |
+| Luật AI 134/2025/QH15 — minh bạch, giám sát con người, quản lý rủi ro hệ thống AI | Agent cảnh báo khi gặp chỉ thị lạ thay vì thực hiện; mọi quyết định có reason để người kiểm tra truy vết; quyền gắn với người ra lệnh, có TTL | `agent/runner.py:142` (cờ injection, bỏ ID/URL attacker), `agent/runner.py:123` (`on_behalf_of`), `agent/policy.py:83` (TTL) | Nội dung và số điều **chưa xác minh** — chưa tìm được văn bản gốc; chỉ ghi nhận mục tiêu chung, không khẳng định nghĩa vụ cụ thể |
+| OWASP ASI01 — Agent Goal Hijack (prompt injection đổi mục tiêu agent) | 4 lure (HTML comment, markup ẩn + zero-width, giả thẩm quyền, chia 2 tài liệu); trifecta split: free text không đi qua boundary A→B | `agent/runner.py:87` (`_ticket_ids` từ tên file), `agent/runner.py:136` (Run A), `tests/test_split.py`, `tests/test_injection.py` (8/8 pass); `reports/attack-before.log` vs `reports/attack-after.log` (rỗng) | Mock LLM dùng heuristic marker; model thật có thể bị hijack theo cách khác, nhưng containment không phụ thuộc phát hiện |
+| OWASP ASI03 — Identity & Privilege Abuse | OBO: quyền hiệu lực = principal ∩ agent_scopes (∩ parent_scopes khi delegation); unknown principal / hết hạn / sai purpose đều deny | `agent/policy.py:79`, `agent/policy.py:83`, `agent/policy.py:86`, `agent/policy.py:92-93`; `tests/test_obo.py` (5/5 pass); `reports/ledger.jsonl:25` | `--as` là principal **mô phỏng**, không phải xác thực production; Run B dùng `delegation_depth=0` (orchestrator gọi thay người dùng) |
+| OWASP ASI04 — Agentic Supply Chain | Gitleaks v8.30.1 quét lịch sử (1 finding token giả ở `1bdd849`) và file hiện tại (sạch); hook pre-commit pin `v8.30.1`; `requirements.lock` có hash, cài bằng `--require-hashes` | `.pre-commit-config.yaml:1-7`, `requirements.lock`, `reports/secrets-incident.md`, `tests/test_supply_chain.py` (3/3 pass) | Hook cần được cài trên từng máy; không thay thế rotate khi secret đã lộ |
+
+Nguồn đã tham khảo (thứ cấp, chưa phải văn bản gốc): luatvietnam.vn (Luật 91/2025/QH15), thuvienphapluat.vn (NĐ 356/2025/NĐ-CP), promptfoo.dev và humansecurity.com (OWASP Top 10 for Agentic Applications, 12/2025).
 
 Chỉ ghi điều khoản cụ thể khi đã đối chiếu văn bản gốc. Mô phỏng kỹ thuật không tự chứng minh tuân thủ pháp luật.
