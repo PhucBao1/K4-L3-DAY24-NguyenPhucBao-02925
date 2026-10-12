@@ -4,7 +4,7 @@ Phạm vi: agent hỗ trợ khách hàng trong lab Day 24, chạy `--mock`, dữ
 
 1. Loại dữ liệu và phân loại:
    - `corpus/*.md` (ticket): **internal** — nội dung không tin cậy (attacker có thể chèn chỉ thị), có thể lẫn SĐT/STK trong lời khách.
-   - `data/customers.json`: **restricted** — họ tên, CCCD (12 số), SĐT, STK, email, `related_tickets`. CCCD và STK được coi là dữ liệu nhạy cảm cần bảo vệ cao nhất trong lab.
+   - `data/customers.json`: **restricted** — họ tên, CCCD (12 số), SĐT, STK, email, `related_tickets`. Theo NĐ 356/2025/NĐ-CP Điều 3 khoản 7 và khoản 10, số CCCD, SĐT và thông tin tài khoản là dữ liệu cá nhân cơ bản, không phải nhạy cảm. Lab vẫn xếp chúng `restricted`, mức bảo vệ cao nhất, vì lộ ra có thể dẫn tới mạo danh hoặc lừa đảo.
    - `data/principals.json`: cấu hình quyền (fixture mô phỏng), không chứa PII.
    - `reports/ledger.jsonl`: metadata tool call; chỉ có `customer_id` dạng hash trong `args_hash`, không có PII thô.
 
