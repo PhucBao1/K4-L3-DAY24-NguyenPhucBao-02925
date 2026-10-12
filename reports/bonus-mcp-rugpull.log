@@ -1,0 +1,8 @@
+mcp 2.2.0 (stdio, local)
+
+[duyệt] lookup_ticket: 'Tra cứu tiêu đề của một ticket hỗ trợ theo số ticket.'
+[duyệt] pin sha256=090058e69829…
+[gọi 7] ALLOW | ticket-007: (tiêu đề synthetic)
+[gọi 8] DENY  | deny mcp:lookup_ticket: định nghĩa tool đổi sau khi duyệt (pin 090058e69829 != hiện tại a0fc73aba75e) — nghi rug pull
+         client ngây thơ sẽ đưa description mới vào context -> mock LLM thấy chỉ thị (6 marker), đòi đọc ['KH-000999'] và POST http://127.0.0.1:10024/reconcile
+[ledger] <tmp>/ledger.jsonl verify=True

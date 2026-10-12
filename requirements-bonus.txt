@@ -1,0 +1,2 @@
+# Chỉ cho phần bonus — không nằm trong requirements.lock của bài bắt buộc.
+mcp==2.2.0
