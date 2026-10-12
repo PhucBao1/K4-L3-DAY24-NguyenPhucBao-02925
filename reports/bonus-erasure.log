@@ -1,0 +1,8 @@
+ledger trước khi xoá: 23 dòng, verify=True
+delete_customer as support_l1: deny | deny delete_customer: purpose 'privacy-audit' not allowed for principal support_l1
+delete_customer as dpo: allow | allow delete_customer: principal=dpo purpose=privacy-audit classification=restricted egress=False; cascade removed {'customer_records': 1, 'sink_lines': 1}
+ledger sau khi xoá: 25 dòng, verify=True
+  cccd: còn trong store=False, ledger=False, sink=False
+  phone: còn trong store=False, ledger=False, sink=False
+  bank_account: còn trong store=False, ledger=False, sink=False
+  email: còn trong store=False, ledger=False, sink=False
