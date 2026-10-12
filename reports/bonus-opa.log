@@ -1,0 +1,20 @@
+Version: 1.21.1
+
+OK  dpo read_customer hợp lệ                 python=True  opa=True  | allow read_customer: principal=dpo purpose=support-reply classification=restricted egress=false
+OK  support_l1 read_customer                 python=False opa=False | deny read_customer: not in effective scope ["search_docs"]
+OK  restricted + egress, dpo đủ quyền        python=False opa=False | deny read_customer: restricted data with egress enabled (owner=lab24-agent/run-b)
+OK  restricted + egress, không principal     python=False opa=False | deny : restricted data with egress enabled (owner=run-b)
+OK  internal search_docs support_l1          python=True  opa=True  | allow search_docs: principal=support_l1 purpose=summarize-tickets classification=internal egress=false
+OK  public + egress search_docs              python=True  opa=True  | allow search_docs: principal=support_l1 purpose=summarize-tickets classification=public egress=true
+OK  delegation vượt parent_scopes            python=False opa=False | deny read_customer: not in effective scope ["search_docs"]
+OK  delegation trong parent_scopes           python=True  opa=True  | allow read_customer: principal=dpo purpose=support-reply classification=restricted egress=false
+OK  hết hạn                                  python=False opa=False | deny read_customer: delegation expired or invalid expires_at "2000-01-01T00:00:00+00:00"
+OK  expires_at thiếu múi giờ                 python=False opa=False | deny read_customer: delegation expired or invalid expires_at "2099-01-01T00:00:00"
+OK  expires_at rỗng                          python=False opa=False | deny read_customer: delegation expired or invalid expires_at ""
+OK  unknown principal                        python=False opa=False | deny read_customer: unknown principal "nobody"
+OK  sai purpose                              python=False opa=False | deny read_customer: purpose "marketing" not allowed for principal dpo
+OK  billing không có purpose support-reply   python=False opa=False | deny read_customer: purpose "support-reply" not allowed for principal billing
+OK  tool ngoài agent_scopes                  python=False opa=False | deny read_customer: not in effective scope ["search_docs"]
+OK  http_post không egress, dpo              python=False opa=False | deny http_post: not in effective scope ["read_customer"]
+
+16/16 case khớp
