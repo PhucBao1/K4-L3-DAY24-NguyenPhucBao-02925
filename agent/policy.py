@@ -34,7 +34,12 @@ không phải xác thực người dùng production.
 """
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
+from datetime import datetime, timezone
+from pathlib import Path
+
+PRINCIPALS_FILE = Path(__file__).resolve().parent.parent / "data" / "principals.json"
 
 
 @dataclass(frozen=True)
@@ -51,5 +56,43 @@ class PolicyContext:
     expires_at: str = ""
 
 
+def _expired(expires_at: str) -> bool:
+    try:
+        deadline = datetime.fromisoformat(expires_at.replace("Z", "+00:00"))
+    except ValueError:
+        return True
+    if deadline.tzinfo is None:
+        return True  # không rõ múi giờ thì không tin
+    return deadline <= datetime.now(timezone.utc)
+
+
 def check(context: PolicyContext) -> tuple[bool, str]:
-    raise NotImplementedError("BƯỚC 3b: implement policy check")
+    c = context
+    tool = c.requested_tool or "<unknown tool>"
+
+    # Rule tối thiểu, đứng trước mọi quyền: không principal nào mở được nó.
+    if c.data_classification == "restricted" and c.egress_enabled:
+        return False, f"deny {tool}: restricted data with egress enabled (owner={c.agent_owner})"
+
+    # Đọc lại mỗi lần: file nhỏ, và sửa fixture là có hiệu lực ngay.
+    principals = json.loads(PRINCIPALS_FILE.read_text(encoding="utf-8"))
+    principal = principals.get(c.principal_id)
+    if principal is None:
+        return False, f"deny {tool}: unknown principal {c.principal_id!r}"
+
+    if _expired(c.expires_at):
+        return False, f"deny {tool}: delegation expired or invalid expires_at {c.expires_at!r}"
+
+    if c.request_purpose not in principal["purposes"]:
+        return False, (f"deny {tool}: purpose {c.request_purpose!r} not allowed "
+                       f"for principal {c.principal_id}")
+
+    effective = set(principal["allowed_tools"]) & set(c.agent_scopes)
+    if c.delegation_depth > 0:
+        effective &= set(c.parent_scopes)
+    if c.requested_tool not in effective:
+        return False, (f"deny {tool}: not in effective scope {sorted(effective)} "
+                       f"(principal={c.principal_id}, depth={c.delegation_depth})")
+
+    return True, (f"allow {tool}: principal={c.principal_id} purpose={c.request_purpose} "
+                  f"classification={c.data_classification} egress={c.egress_enabled}")
